@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'coin_data.dart';
 import 'package:flutter/cupertino.dart';
 import 'coin_api.dart';
+import 'exchange_rate_card.dart';
 
 class PriceScreen extends StatefulWidget {
   @override
@@ -11,7 +12,7 @@ class PriceScreen extends StatefulWidget {
 
 class _PriceScreenState extends State<PriceScreen> {
   String currentCurrency = 'USD';
-  String btcUsdValue = '?';
+  dynamic rateData;
 
   DropdownButton<String> getDropDownButton() {
     return DropdownButton<String>(
@@ -19,7 +20,7 @@ class _PriceScreenState extends State<PriceScreen> {
       items: getMenuItemList(),
       onChanged: (String? value) async {
         currentCurrency = value!;
-        updateUI(await fetchExchangeRate('', value));
+        updateUI(await fetchExchangeRate(value));
       },
     );
   }
@@ -30,7 +31,7 @@ class _PriceScreenState extends State<PriceScreen> {
       onSelectedItemChanged: (int value) async {
         print(currenciesList[value]);
         currentCurrency = currenciesList[value];
-        updateUI(await fetchExchangeRate('', currenciesList[value]));
+        updateUI(await fetchExchangeRate(currenciesList[value]));
       },
       children: getCupertinoItemList(),
     );
@@ -63,15 +64,43 @@ class _PriceScreenState extends State<PriceScreen> {
   }
 
   void updateUI(dynamic data) {
-    print(data);
+    print('updateUI data: $data');
     setState(() {
-      if (data == null) {
-        btcUsdValue = '0';
-        return;
-      }
-      double value = data['rate'];
-      btcUsdValue = value.toStringAsFixed(2);
+      rateData = data;
     });
+  }
+
+  List<Widget> columnWidgets() {
+    List<Widget> list = [];
+    String value;
+
+    print('rate: $rateData');
+
+    for (String crypto in cryptoList) {
+      try {
+        value = rateData[crypto]['rate'].toString();
+      } catch (e) {
+        print(e);
+        value = '?';
+      }
+
+      list.add(
+        ExchangeRateCard(
+          btcValue: value,
+          currentCurrency: currentCurrency,
+          currentCrypto: crypto,
+        ),
+      );
+    }
+    list.add(Container(
+      height: 150.0,
+      alignment: Alignment.center,
+      padding: EdgeInsets.only(bottom: 30.0),
+      color: Colors.lightBlue,
+      child: Platform.isIOS ? getCupertinoPicker() : getDropDownButton(),
+    ));
+
+    return list;
   }
 
   @override
@@ -84,36 +113,7 @@ class _PriceScreenState extends State<PriceScreen> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Padding(
-            padding: EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0),
-            child: Card(
-              color: Colors.lightBlueAccent,
-              elevation: 5.0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
-                child: Text(
-                  '1 BTC = $btcUsdValue $currentCurrency',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20.0,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Container(
-            height: 150.0,
-            alignment: Alignment.center,
-            padding: EdgeInsets.only(bottom: 30.0),
-            color: Colors.lightBlue,
-            child: Platform.isIOS ? getCupertinoPicker() : getDropDownButton(),
-          ),
-        ],
+        children: columnWidgets(),
       ),
     );
   }

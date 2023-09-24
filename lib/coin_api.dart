@@ -1,14 +1,21 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'coin_data.dart';
 
 const coinApiUrl = 'https://rest.coinapi.io/v1/exchangerate';
 const apiKey = '40671FB0-D34B-4BA5-A363-C893BC36CDBA';
 
-Future<dynamic> fetchExchangeRate(String crypto, String currency) async {
-  String url = '$coinApiUrl/BTC/$currency?apiKey=$apiKey';
-  var rateData = await getData(url);
-  return rateData;
+Future<dynamic> fetchExchangeRate(String currency) async {
+  String url;
+  var cryptoMap = {};
+  for (String crypto in cryptoList) {
+    url = '$coinApiUrl/$crypto/$currency?apiKey=$apiKey';
+    var rateData = await getData(url);
+    cryptoMap[crypto] = rateData;
+  }
+  //var rateData = await getData(url);
+  return cryptoMap;
 }
 
 Future getData(String url) async {
