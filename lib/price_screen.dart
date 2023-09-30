@@ -72,21 +72,21 @@ class _PriceScreenState extends State<PriceScreen> {
 
   List<Widget> columnWidgets() {
     List<Widget> list = [];
-    String value;
+    double value = 0.0;
 
     print('rate: $rateData');
 
     for (String crypto in cryptoList) {
       try {
-        value = rateData[crypto]['rate'].toString();
+        value = rateData[crypto]['rate'];
       } catch (e) {
         print(e);
-        value = '?';
+        value = 0.0;
       }
 
       list.add(
         ExchangeRateCard(
-          btcValue: value,
+          btcValue: value.toStringAsFixed(2),
           currentCurrency: currentCurrency,
           currentCrypto: crypto,
         ),
